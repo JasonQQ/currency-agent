@@ -26,7 +26,11 @@
    ```
 2. 运行主程序：
    ```bash
-   python main.py
+   uv run python main.py
+   ```
+3. 运行Client：
+   ```bash
+   uv run python test_a2a_client.py
    ```
 
 ## 用法示例
