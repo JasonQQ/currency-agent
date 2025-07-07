@@ -3,7 +3,9 @@ name = "currency-agent"
 version = "0.1.0"
 description = "货币转换和汇率查询 Agent"
 requires-python = ">=3.13"
-
-[project.dependencies]
-a2a-sdk = "==0.2.10"
-requests = "*" 
+dependencies = [
+    "a2a-sdk==0.2.10",
+    "requests",
+    "aiohttp",
+    "uvicorn"
+] 

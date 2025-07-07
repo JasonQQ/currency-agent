@@ -1,6 +1,7 @@
 import requests
 import json
 from typing import List, Dict, Any, Optional
+import re
 
 # 系统提示词
 SYSTEM_PROMPT = (
@@ -41,37 +42,26 @@ class CurrencyAgent:
             return {"status": "error", "data": f"未知错误: {str(e)}"}
 
     def stream(self, user_query: str):
-        """
-        流式处理用户请求，实时返回处理状态和结果。
-        """
         self.add_to_history("user", user_query)
-        # 简单判断是否为汇率查询
+        # 直接在stream中处理解析和status
         if "汇率" in user_query or "转换" in user_query:
-            # 这里假设格式为："X 转换为 Y" 或 "X 对 Y 汇率"
-            try:
-                from_currency, to_currency = self._parse_currencies(user_query)
+            codes = re.findall(r"[A-Z]{3}", user_query)
+            if len(codes) >= 2:
+                from_currency, to_currency = codes[0], codes[1]
                 yield {"status": "tool_use", "data": f"正在查询 {from_currency} 到 {to_currency} 的汇率..."}
                 result = self.get_exchange_rate(from_currency, to_currency)
                 self.add_to_history("agent", result)
                 yield result
-            except Exception as e:
-                yield {"status": "error", "data": f"解析货币失败: {str(e)}"}
-        else:
+                return
+            cn_map = {"美元": "USD", "日元": "JPY", "欧元": "EUR", "人民币": "CNY", "英镑": "GBP"}
+            found = [cn_map[k] for k in cn_map if k in user_query]
+            if len(found) >= 2:
+                from_currency, to_currency = found[0], found[1]
+                yield {"status": "tool_use", "data": f"正在查询 {from_currency} 到 {to_currency} 的汇率..."}
+                result = self.get_exchange_rate(from_currency, to_currency)
+                self.add_to_history("agent", result)
+                yield result
+                return
             yield {"status": "input_required", "data": "请明确说明需要查询的货币对。"}
-
-    def _parse_currencies(self, query: str) -> tuple[str, str]:
-        """
-        简单解析货币对，实际可根据需求扩展。
-        """
-        # 示例："美元对日元汇率" 或 "USD 转换为 JPY"
-        # 这里只做简单英文货币代码提取
-        import re
-        codes = re.findall(r"[A-Z]{3}", query)
-        if len(codes) >= 2:
-            return codes[0], codes[1]
-        # 中文币种名映射
-        cn_map = {"美元": "USD", "日元": "JPY", "欧元": "EUR", "人民币": "CNY", "英镑": "GBP"}
-        found = [cn_map[k] for k in cn_map if k in query]
-        if len(found) >= 2:
-            return found[0], found[1]
-        raise ValueError("无法识别货币对，请使用标准货币代码或常见币种中文名。") 
+        else:
+            yield {"status": "input_required", "data": "请明确说明需要查询的货币对。"} 

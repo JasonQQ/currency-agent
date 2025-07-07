@@ -1,3 +1,5 @@
+> **本项目由 [Cursor AI](https://www.cursor.so/) 自动生成和重构。**
+
 # Currency Agent
 
 基于 Python 的货币转换与汇率查询智能 Agent，支持流式响应和 JSON 格式输出，使用 [Frankfurter API](https://www.frankfurter.app/) 获取实时汇率。
